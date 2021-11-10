@@ -15,14 +15,14 @@ class Naive(nn.Module):
     
     Only works with models which have output dimension of 1.
     """
-    def __init__(self, model, dist_fam, args={}):
+    def __init__(self, model, dist_constructor, args={}):
         super().__init__()
         
         self.config = deepcopy(base_config)
         self.config.update(args)
         
         self.model = model
-        self.dist_fam = dist_fam
+        self.dist_constructor = dist_constructor
         self.gpu = self.config["device"] != "cpu"
 
         self.trainable_params = list(filter(lambda x: x.requires_grad, self.model.parameters()))
@@ -50,7 +50,13 @@ class Naive(nn.Module):
             unc = hessian based uncertainty estimates shape (N)
         """ 
         mu = self.model(inputs)
-        output = self.dist_fam.output(mu)
-        unc = self.dist_fam.uncertainty(output)
+        dists = []
+        unc = []
+        for j in range(mu.shape[0]):
+            dist = self.dist_constructor(mu[j])
+            dists.append(dist)
+            unc.append(dist.entropy().sum())
+
+        unc = torch.stack(unc)
     
-        return output, unc
+        return dists, unc

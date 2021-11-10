@@ -5,7 +5,7 @@ import numpy as np
 from tqdm.autonotebook import tqdm as tqdm
 from torch.utils.tensorboard import SummaryWriter
 
-def train_model(model, dataset_class, dist_fam, optimizer, scheduler, device, num_epochs=25, batch_size=4, log_every=100):
+def train_model(model, dataset_class, dist_constructor, optimizer, scheduler, device, num_epochs=25, batch_size=4, log_every=100):
     """
     Trains a model on datatsets['train'] using criterion(model(inputs), labels) as the loss.
     Returns the model with lowest loss on datasets['val']
@@ -74,9 +74,10 @@ def train_model(model, dataset_class, dist_fam, optimizer, scheduler, device, nu
                     # track history if only in train
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(inputs)
-                        loss = dist_fam.loss(outputs, labels).mean()
-                        metric_name, metric = dist_fam.metric(dist_fam.output(outputs), labels)
-                        metric = metric.mean()
+                        dist = dist_constructor(outputs)
+                        loss = -dist.log_prob(labels).mean()
+                        metric = dist.metric(labels).mean()
+
                         # backward + optimize only if in training phase
                         if phase == 'train':
                             loss.backward()

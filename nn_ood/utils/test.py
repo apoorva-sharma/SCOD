@@ -29,8 +29,7 @@ def test_unc_model(model, dataset, device, batch_size=1, **forward_kwargs):
         end = time.time()
                 
         times_per_item.append( (end - start)/inputs.shape[0] )
-        
-        metric_name, metric = model.dist_fam.metric(outputs, labels)
+        metric = torch.stack( [dist.metric(label) for (dist,label) in zip(outputs,labels)] )
         
         metrics.append( metric.cpu().detach().numpy() )
         unc_list.append( uncs.cpu().detach().numpy() )

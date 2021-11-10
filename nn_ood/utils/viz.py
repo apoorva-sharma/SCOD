@@ -11,7 +11,7 @@ def plot_histogram(ax, results):
     in results on axis ax
     """
     for name, data in results.items():
-        sns.kdeplot(data["uncs"], shade=True, label=name, ax=ax)
+        sns.kdeplot(x=data["uncs"], shade=True, label=name, ax=ax)
     ax.set_ylabel("freq")
     ax.set_xlabel("uncertainty")
     ax.legend()

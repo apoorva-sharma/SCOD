@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from nn_ood.data.rotated_mnist import RotatedMNIST
 from nn_ood.posteriors import LocalEnsemble, Ensemble, SCOD, KFAC, Naive
-from nn_ood.distributions import GaussianFixedDiagVar
+from scod.distributions import Normal
 import numpy as np
 import matplotlib.pyplot as plt
     
@@ -108,7 +108,7 @@ def unfreeze_model(model):
     for p in model.parameters():
         p.requires_grad = True
 
-dist_fam = GaussianFixedDiagVar().to(device)
+dist_constructor = lambda z: Normal(loc=z, scale=0.1*torch.ones_like(z))
 opt_class = torch.optim.SGD
 opt_kwargs = {
     'lr': LEARNING_RATE,
@@ -125,7 +125,7 @@ prep_unc_models = {
         'class': LocalEnsemble,
         'kwargs': {
             'num_eigs': 50,
-            'full_data': True,
+            'full_data': False,
             'device':'gpu'
         },
     },

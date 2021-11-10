@@ -27,7 +27,7 @@ class KFAC(nn.Module):
     
     Only works with models which have output dimension of 1.
     """
-    def __init__(self, model, dist_fam, args={}):
+    def __init__(self, model, dist_constructor, args={}):
         super().__init__()
         
         self.config = deepcopy(base_config)
@@ -35,7 +35,7 @@ class KFAC(nn.Module):
         
         self.model = deepcopy(model)
         self.posterior_mean = deepcopy(self.model.state_dict())
-        self.dist_fam = dist_fam
+        self.dist_constructor = dist_constructor
         self.kfac = fisher.KFAC(self.model)
         
         zero_input = torch.zeros([1] + self.config['input_shape'])
@@ -97,11 +97,11 @@ class KFAC(nn.Module):
             inputs = prep_vec(inputs)
 
             thetas = self.model(inputs) # get params of output dist
-            dist = self.dist_fam.dist(thetas)
+            dist = self.dist_constructor(thetas)
             for _ in range(self.num_loss_samples):
                 sampled_labels = dist.sample()
 
-                loss = self.dist_fam.loss(thetas, sampled_labels).mean()
+                loss = -dist.log_prob(sampled_labels).mean()
                 self.model.zero_grad()
                 loss.backward(retain_graph=True)
 
@@ -152,7 +152,15 @@ class KFAC(nn.Module):
             self.model.load_state_dict(self.posterior_mean)
         
         outputs = torch.stack(outputs, dim=0)
-#         print(outputs)
-        mu, unc = self.dist_fam.merge_ensemble(outputs)
+        dists = []
+        unc = []
+        for j in range(outputs.shape[1]):
+            batch_dist = self.dist_constructor(outputs[:,j,:])
+            dist = batch_dist.merge_batch()
+            dists.append(dist)
+            unc.append(dist.entropy().sum())
+        # mu, unc = self.dist_fam.merge_ensemble(outputs)
+
+        unc = torch.stack(unc)
     
-        return mu, unc
+        return dists, unc

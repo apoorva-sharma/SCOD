@@ -4,6 +4,7 @@ from torch import nn
 from ..second_order import zero_grads
 from hessian_eigenthings import compute_hessian_eigenthings
 from copy import deepcopy
+from scod import distributions
 
 from tqdm import trange
 
@@ -21,14 +22,14 @@ class LocalEnsemble(nn.Module):
     """
     Wraps a trained model with functionality for adding epistemic uncertainty estimation.
     """
-    def __init__(self, model, dist_fam, args={}):
+    def __init__(self, model, dist_constructor, args={}):
         super().__init__()
         
         self.config = deepcopy(base_config)
         self.config.update(args)
         
         self.model = model
-        self.dist_fam = dist_fam
+        self.dist_constructor = dist_constructor
         if self.config['model_preprocess'] is not None:
             self.config['model_preprocess'](model)
             
@@ -75,7 +76,7 @@ class LocalEnsemble(nn.Module):
                                                  shuffle=True)
         eigs, eigvecs = compute_hessian_eigenthings(
                             self.model,dataloader,
-                            lambda x,y: self.dist_fam.loss(x,y).mean(),
+                            lambda x,y: -self.dist_constructor(x).log_prob(y).mean(),
                             self.num_eigs, mode='power_iter', full_dataset=self.config['full_data'], max_samples=self.max_samples, use_gpu=self.gpu,
         momentum=0.9,
         power_iter_steps=20)
@@ -166,15 +167,24 @@ class LocalEnsemble(nn.Module):
         std_outputs = 100*torch.sqrt( ((outputs - mean_outputs)**2).sum(dim=0)/(n-1) )[:,0]
         
         return mean_outputs, std_outputs
+
+    def sample_y(self, dist):
+        if type(dist) == distributions.Bernoulli:
+            ys = torch.arange(self.n_y_samp, dtype=torch.int64) % 2
+        elif type(dist) == distributions.Categorical:
+            ys = torch.arange(self.n_y_samp, dtype=torch.int64) % dist.probs.shape[-1]
+        else:
+            ys = dist.sample(self.n_y_samp)
+        return ys
     
     def forward_extrap(self, mu, n_eigs):
         N = mu.shape[0]
         unc = torch.zeros(N, self.n_y_samp)
         for j in range(N):
+            dist = self.dist_constructor(mu[j])
             if self.n_y_samp > 1:
-                y_samp = self.dist_fam.sample_y(mu,self.n_y_samp).to(mu.device) # d
-                mu = mu[j:j+1,:].expand([self.n_y_samp]+[mu.shape[-1]]) # d x d
-                loss = self.dist_fam.loss(mu, y_samp) # d x N
+                y_samp = self.sample_y(dist).to(mu.device) # n_y_samp x d
+                loss = -dist.log_prob(y_samp) # n_samp
             else:
                 loss = mu[j:j+1,0:1]
                 
@@ -195,12 +205,12 @@ class LocalEnsemble(nn.Module):
     def forward_fisher(self, mu, n_eigs):
         N = mu.shape[0]
         unc = torch.zeros(N)
-        # batch apply sqrt(I_th) to output
-        theta = self.dist_fam.apply_sqrt_F(mu, mu)
-        
+
         # compute uncertainty by backpropping back into each sample
         for j in range(N):
-            jac = self._get_weight_jacobian(theta[j,:])
+            dist = self.dist_constructor(mu[j])
+            Lt_th = dist.apply_sqrt_F(mu[j])
+            jac = self._get_weight_jacobian(Lt_th)
             with torch.no_grad():
                 proj_g =  jac @ self.top_eigs[:,:n_eigs]
                 proj_g = proj_g @ self.top_eigs[:,:n_eigs].t()
@@ -237,6 +247,10 @@ class LocalEnsemble(nn.Module):
             unc = self.forward_extrap(mu, n_eigs)
         elif online_metric == 'fisher':
             unc = self.forward_fisher(mu, n_eigs)
-            
-        return self.dist_fam.output(mu), unc
+        
+        dists = []
+        for j in range(mu.shape[0]):
+            dists.append(self.dist_constructor(mu[j]))
+
+        return dists, unc
     

@@ -4,7 +4,7 @@ from torchvision import models
 import torch.nn as nn
 from nn_ood.data.cifar10 import Cifar10Data
 from nn_ood.posteriors import LocalEnsemble, SCOD, Ensemble, Naive, KFAC
-from nn_ood.distributions import CategoricalLogit
+from scod.distributions import Categorical
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from densenet import densenet121
@@ -136,7 +136,7 @@ def get_features_and_classifier(model):
     return features, classifier
             
 ## OPTIMIZATION 
-dist_fam = CategoricalLogit().to(device) #criterion = nn.MSELoss()
+dist_constructor = lambda z: Categorical(logits=z)
 opt_class = torch.optim.SGD
 opt_kwargs = {
     'lr': LEARNING_RATE,
@@ -150,84 +150,84 @@ sched_kwargs = {
 
 # recipe for preparing uncertainty models
 prep_unc_models = {
-    'local_ensemble': {
-        'class': LocalEnsemble,
-        'kwargs': {
-            'batch_size': 32,
-            'max_samples': 4,
-            'num_eigs': 20,
-            'device': 'gpu'
-        }
-    },
-    'scod_SRFT_s184_n30_freeze_0.85': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 184,
-            'num_eigs': 30,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-        'freeze': 0.85
-    },
-    'scod_SRFT_s76_n12': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 76,
-            'num_eigs': 12,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-    },
-    'scod_SRFT_s76_n12_freeze_0.5': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 76,
-            'num_eigs': 12,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-        'freeze': 0.5,
-    },
-    'scod_SRFT_s76_n12_freeze_0.25': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 76,
-            'num_eigs': 12,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-        'freeze': 0.25,
-    },
-    'scod_SRFT_s76_n12_freeze_0.75': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 76,
-            'num_eigs': 12,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-        'freeze': 0.75,
-    },
-    'scod_SRFT_s76_n12_freeze_0.85': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 76,
-            'num_eigs': 12,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-        'freeze': 0.85,
-    },
-    'scod_SRFT_s76_n12_freeze_1.0': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 76,
-            'num_eigs': 12,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-        'freeze': 1.0,
-    },
+    # 'local_ensemble': {
+    #     'class': LocalEnsemble,
+    #     'kwargs': {
+    #         'batch_size': 32,
+    #         'max_samples': 4,
+    #         'num_eigs': 20,
+    #         'device': 'gpu'
+    #     }
+    # },
+    # 'scod_SRFT_s184_n30_freeze_0.85': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 184,
+    #         'num_eigs': 30,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    #     'freeze': 0.85
+    # },
+    # 'scod_SRFT_s76_n12': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 76,
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    # },
+    # 'scod_SRFT_s76_n12_freeze_0.5': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 76,
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    #     'freeze': 0.5,
+    # },
+    # 'scod_SRFT_s76_n12_freeze_0.25': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 76,
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    #     'freeze': 0.25,
+    # },
+    # 'scod_SRFT_s76_n12_freeze_0.75': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 76,
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    #     'freeze': 0.75,
+    # },
+    # 'scod_SRFT_s76_n12_freeze_0.85': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 76,
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    #     'freeze': 0.85,
+    # },
+    # 'scod_SRFT_s76_n12_freeze_1.0': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 76,
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    #     'freeze': 1.0,
+    # },
     'kfac': {
         'class': KFAC,
         'kwargs': {
@@ -240,18 +240,18 @@ prep_unc_models = {
 
 # recipe for testing uncertainty models
 test_unc_models = {
-    'local_ensemble': {
-        'class': LocalEnsemble,
-        'kwargs': {
-            'num_eigs': 20,
-            'device': 'gpu',
-            'n_y_samp': 5,
-        },
-        'load_name': 'local_ensemble',
-        'forward_kwargs': {
-            'n_samples': 1
-        }
-    },
+    # 'local_ensemble': {
+    #     'class': LocalEnsemble,
+    #     'kwargs': {
+    #         'num_eigs': 20,
+    #         'device': 'gpu',
+    #         'n_y_samp': 5,
+    #     },
+    #     'load_name': 'local_ensemble',
+    #     'forward_kwargs': {
+    #         'n_samples': 1
+    #     }
+    # },
     'SCOD (T=76,k=12)': {
         'class': SCOD,
         'kwargs': {
@@ -263,66 +263,66 @@ test_unc_models = {
             'n_eigs': 12,
         }
     },
-    'SCOD_freeze_0.25 (T=76,k=12)': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 12,
-            'device':'gpu',
-        },
-        'freeze': 0.25,
-        'load_name': 'scod_SRFT_s76_n12_freeze_0.25',
-        'forward_kwargs': {
-            'n_eigs': 12,
-        }
-    },
-    'SCOD_freeze_0.5 (T=76,k=12)': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 12,
-            'device':'gpu',
-        },
-        'freeze': 0.5,
-        'load_name': 'scod_SRFT_s76_n12_freeze_0.5',
-        'forward_kwargs': {
-            'n_eigs': 12,
-        }
-    },
-    'SCOD_freeze_0.75 (T=76,k=12)': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 12,
-            'device':'gpu',
-        },
-        'freeze': 0.75,
-        'load_name': 'scod_SRFT_s76_n12_freeze_0.75',
-        'forward_kwargs': {
-            'n_eigs': 12,
-        }
-    },
-    'SCOD_freeze_0.85 (T=76,k=12)': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 12,
-            'device':'gpu',
-        },
-        'freeze': 0.85,
-        'load_name': 'scod_SRFT_s76_n12_freeze_0.85',
-        'forward_kwargs': {
-            'n_eigs': 12,
-        }
-    },
-    'SCOD_freeze_1.0 (T=76,k=12)': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 12,
-            'device':'gpu',
-        },
-        'freeze': 1.0,
-        'load_name': 'scod_SRFT_s76_n12_freeze_1.0',
-        'forward_kwargs': {
-            'n_eigs': 12,
-        }
-    },
+    # 'SCOD_freeze_0.25 (T=76,k=12)': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #     },
+    #     'freeze': 0.25,
+    #     'load_name': 'scod_SRFT_s76_n12_freeze_0.25',
+    #     'forward_kwargs': {
+    #         'n_eigs': 12,
+    #     }
+    # },
+    # 'SCOD_freeze_0.5 (T=76,k=12)': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #     },
+    #     'freeze': 0.5,
+    #     'load_name': 'scod_SRFT_s76_n12_freeze_0.5',
+    #     'forward_kwargs': {
+    #         'n_eigs': 12,
+    #     }
+    # },
+    # 'SCOD_freeze_0.75 (T=76,k=12)': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #     },
+    #     'freeze': 0.75,
+    #     'load_name': 'scod_SRFT_s76_n12_freeze_0.75',
+    #     'forward_kwargs': {
+    #         'n_eigs': 12,
+    #     }
+    # },
+    # 'SCOD_freeze_0.85 (T=76,k=12)': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #     },
+    #     'freeze': 0.85,
+    #     'load_name': 'scod_SRFT_s76_n12_freeze_0.85',
+    #     'forward_kwargs': {
+    #         'n_eigs': 12,
+    #     }
+    # },
+    # 'SCOD_freeze_1.0 (T=76,k=12)': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #     },
+    #     'freeze': 1.0,
+    #     'load_name': 'scod_SRFT_s76_n12_freeze_1.0',
+    #     'forward_kwargs': {
+    #         'n_eigs': 12,
+    #     }
+    # },
     'SCOD_freeze_0.85 (T=184,k=30)': {
         'class': SCOD,
         'kwargs': {
@@ -355,15 +355,15 @@ test_unc_models = {
         'load_name': None,
         'forward_kwargs': {}
     },
-    'ensemble': {
-        'class': Ensemble,
-        'kwargs': {
-            'device': 'gpu',
-        },
-        'load_name': None,
-        'multi_model': True,
-        'forward_kwargs': {}
-    }
+    # 'ensemble': {
+    #     'class': Ensemble,
+    #     'kwargs': {
+    #         'device': 'gpu',
+    #     },
+    #     'load_name': None,
+    #     'multi_model': True,
+    #     'forward_kwargs': {}
+    # }
 }
 
 # OOD PERFORMANCE TESTS

@@ -15,14 +15,14 @@ class Ensemble(nn.Module):
     
     Only works with models which have output dimension of 1.
     """
-    def __init__(self, models, dist_fam, args={}):
+    def __init__(self, models, dist_constructor, args={}):
         super().__init__()
         
         self.config = deepcopy(base_config)
         self.config.update(args)
         
         self.model = deepcopy(models[0])
-        self.dist_fam = dist_fam
+        self.dist_constructor = dist_constructor
         self.state_dicts = [ model.state_dict() for model in models ]
             
         self.gpu = self.config["device"] != "cpu"
@@ -59,6 +59,15 @@ class Ensemble(nn.Module):
                 outputs.append( self.model(inputs) )
         
         outputs = torch.stack(outputs, dim=0)
-        mu, unc = self.dist_fam.merge_ensemble(outputs)
+        dists = []
+        unc = []
+        for j in range(outputs.shape[1]):
+            batch_dist = self.dist_constructor(outputs[:,j,:])
+            dist = batch_dist.merge_batch()
+            dists.append(dist)
+            unc.append(dist.entropy().sum())
+
+        unc = torch.stack(unc)
+        # mu, unc = self.dist_fam.merge_ensemble(outputs)
         
-        return mu, unc
+        return dists, unc

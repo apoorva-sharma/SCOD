@@ -13,17 +13,17 @@ class RotatedMNIST(Subset):
         self.std_rot = 3.14/4
         self.digit = 2
         if split == "train":
-            gen = torch.random.manual_seed(1)
+            random_state = np.random.RandomState(1)
         elif split == "val":
-            gen = torch.random.manual_seed(2)
+            random_state = np.random.RandomState(2)
         elif split == "ood":
             self.digit = 5
-            gen = torch.random.manual_seed(3)
+            random_state = np.random.RandomState(3)
             self.mean_rot = 0
             self.std_rot = 3.14/4
         elif split == "ood_angle":
             self.digit = 2
-            gen = torch.random.manual_seed(3)
+            random_state = np.random.RandomState(4)
             self.mean_rot = 3.14
             self.std_rot = 3.14/4
         
@@ -31,7 +31,7 @@ class RotatedMNIST(Subset):
 
         self.mnist = MNIST(root=root, train=(split=="train"), download=True)
         
-        self.gen = gen
+        self.random_state = random_state
         self.normalize = transforms.Normalize((0.1307,), (0.3081,))
         
         # filter out only 1s
@@ -46,10 +46,10 @@ class RotatedMNIST(Subset):
         
     def __getitem__(self, i):
         input, target = super(RotatedMNIST, self).__getitem__(i)
-        target = torch.normal(self.mean_rot, self.std_rot, (1,), generator=self.gen)
+        target = self.std_rot * self.random_state.randn() + self.mean_rot #torch.normal(self.mean_rot, self.std_rot, (1,), generator=self.gen)
         input = TF.rotate(input, target * (180 / 3.14))
         input = transforms.ToTensor()(input)
         input = self.normalize(input)
-        return input, target
+        return input, torch.Tensor([target])
 
     
