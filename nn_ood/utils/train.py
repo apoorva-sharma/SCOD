@@ -163,4 +163,93 @@ def train_ensemble(K, model_init_fn, dataset_class, criterion, opt_class, opt_kw
     return models
 
 
-        
+
+def minimize_val_nll(unc_model, val_dataset, num_epochs=1, batch_size=20, log_every=100):
+    writer = SummaryWriter()
+    since = time.time()
+
+    dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
+                                             shuffle=True, num_workers=4)
+
+    device = unc_model.device
+
+    dataset_size = len(val_dataset)
+    optimizer = torch.optim.Adam(unc_model.hyperparameters, lr=0.1)
+
+    best_hyperparms = [copy.copy(p.data) for p in unc_model.hyperparameters]
+    best_loss = np.inf
+    
+    val_loss = np.nan
+    
+    n_batches_seen = 0
+
+    with tqdm(total=num_epochs, position=0) as pbar:
+        pbar2 = tqdm(total=dataset_size, position=1)
+        for epoch in range(num_epochs):
+            running_loss = 0.0
+
+            running_tr_loss = 0.0 # used for logging
+
+            running_n = 0
+            
+            # Iterate over data.
+            pbar2.refresh()
+            pbar2.reset(total=dataset_size)
+            for inputs, labels in dataloader:
+                n_batches_seen += 1
+                
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward
+                dists, _ = unc_model(inputs)
+                loss = 0
+                for dist, label in zip(dists, labels):
+                    loss += -dist.log_prob(label)
+                
+                loss.backward()
+                optimizer.step()
+
+                running_loss += loss.item() * inputs.shape[0]
+                
+                running_n += inputs.shape[0]
+                
+                if n_batches_seen % log_every == 0:
+                    mean_loss = running_loss / running_n
+                    
+                    writer.add_scalar('loss', mean_loss, n_batches_seen)
+                    
+                    running_loss = 0.
+                    running_n = 0
+                
+                pbar2.set_postfix(batch_loss=loss.item())
+                pbar2.update(inputs.shape[0])
+
+            epoch_loss = running_loss / dataset_size
+            
+            val_loss = epoch_loss
+
+            pbar.set_postfix(val_loss=val_loss)
+
+            # deep copy the model
+            if epoch_loss < best_loss:
+                best_loss = epoch_loss
+                best_hyperparms = [copy.copy(p.data) for p in unc_model.hyperparameters]
+                
+            pbar.update(1)
+
+    time_elapsed = time.time() - since
+    print('Training complete in {:.0f}m {:.0f}s'.format(
+        time_elapsed // 60, time_elapsed % 60))
+    print('Best val Loss: {:4f}'.format(best_loss))
+    
+    
+    writer.flush()
+
+    # load best model weights
+    for hp, best_hp in zip( unc_model.hyperparameters, best_hyperparms ):
+        hp.data = best_hp
+

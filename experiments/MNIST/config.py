@@ -209,38 +209,61 @@ test_unc_models = {
     #         'n_eigs': 10
     #     }
     # },
-    'kfac': {
-        'class': KFAC,
+    # 'kfac': {
+    #     'class': KFAC,
+    #     'kwargs': {
+    #         'device':'gpu',
+    #         'input_shape': [1, 28, 28]
+    #     },
+    #     'load_name': 'kfac',
+    #     'forward_kwargs': {}
+    # },
+    'SCOD': {
+        'class': SCOD,
         'kwargs': {
-            'device':'gpu',
-            'input_shape': [1, 28, 28]
+            'num_eigs': 100,
+            'device':'gpu'
         },
-        'load_name': 'kfac',
-        'forward_kwargs': {}
+        'load_name': 'scod_SRFT_s604_n100',
+        'forward_kwargs': {
+            'n_eigs':300,
+        }
     },
-    # 'SCOD': {
-    #     'class': SCOD,
-    #     'kwargs': {
-    #         'num_eigs': 100,
-    #         'device':'gpu'
-    #     },
-    #     'load_name': 'scod_SRFT_s604_n100',
-    #     'forward_kwargs': {
-    #         'n_eigs':300,
-    #     }
-    # },
-    # 'SCOD_freeze': {
-    #     'class': SCOD,
-    #     'kwargs': {
-    #         'num_eigs': 100,
-    #         'device':'gpu'
-    #     },
-    #     'freeze':True,
-    #     'load_name': 'scod_SRFT_s604_n100_freeze',
-    #     'forward_kwargs': {
-    #         'n_eigs':300,
-    #     }
-    # },
+    'SCOD_freeze': {
+        'class': SCOD,
+        'kwargs': {
+            'num_eigs': 100,
+            'device':'gpu'
+        },
+        'freeze':True,
+        'load_name': 'scod_SRFT_s604_n100_freeze',
+        'forward_kwargs': {
+            'n_eigs':300,
+        }
+    },
+    'SCOD_calibrated': {
+        'class': SCOD,
+        'kwargs': {
+            'num_eigs': 100,
+            'device':'gpu'
+        },
+        'load_name': 'scod_SRFT_s604_n100_calibrated',
+        'forward_kwargs': {
+            'n_eigs':300,
+        }
+    },
+    'SCOD_freeze_calibrated': {
+        'class': SCOD,
+        'kwargs': {
+            'num_eigs': 100,
+            'device':'gpu'
+        },
+        'freeze':True,
+        'load_name': 'scod_SRFT_s604_n100_freeze_calibrated',
+        'forward_kwargs': {
+            'n_eigs':300,
+        }
+    },
     # 'naive': {
     #     'class': Naive,
     #     'kwargs': {
@@ -307,7 +330,8 @@ keys_to_compare = [
     'local_ensemble_n100',
     'kfac',
     'naive',
-    'maha'
+    'SCOD_calibrated',
+    'SCOD_freeze_calibrated',
 ]
 
 colors= [
@@ -317,7 +341,8 @@ colors= [
     'xkcd:mango',
     'xkcd:blood orange',
     'xkcd:scarlet',
-    'xkcd:indigo'
+    'xkcd:violet',
+    'xkcd:purple'
 ]
 
 

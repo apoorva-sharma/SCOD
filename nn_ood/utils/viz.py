@@ -50,7 +50,7 @@ def plot_binned_by_unc(axes, results, N_bins = 15):
         alphas = n_per_bin / np.max(n_per_bin)
         axes.scatter(unnormed_bins[1:], binned_avg_metric, s=20*alphas, label=name)
 
-    axes.legend()
+    axes.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     axes.set_xlabel("unc")
     axes.grid()
         

@@ -148,6 +148,31 @@ test_unc_models = {
         'load_name': 'kfac',
         'forward_kwargs': {}
     },
+    'SCOD_calibrated': {
+        'class': SCOD,
+        'kwargs': {
+            'num_eigs': 100,
+            'batch_size': 4,
+            'learning_rate': 1e-5,
+            'proj_type':'posterior_pred',
+            'device':'gpu'
+        },
+        'load_name': 'scod_SRFT_s604_n100_calibrated',
+        'forward_kwargs': {}
+    },
+    'SCOD_freeze_calibrated': {
+        'class': SCOD,
+        'kwargs': {
+            'num_eigs': 100,
+            'batch_size': 4,
+            'learning_rate': 1e-5,
+            'proj_type':'posterior_pred',
+            'device':'gpu'
+        },
+        'freeze': True,
+        'load_name': 'scod_SRFT_s604_n100_freeze_calibrated',
+        'forward_kwargs': {}
+    },
     'SCOD': {
         'class': SCOD,
         'kwargs': {
@@ -209,7 +234,9 @@ keys_to_compare = [
     'ensemble', 
     'local_ensemble_n20',
     'kfac',
-    'naive'
+    'naive',
+    'SCOD_calibrated',
+    'SCOD_freeze_calibrated',
 ]
 
 colors= [
@@ -219,6 +246,8 @@ colors= [
     'xkcd:mango',
     'xkcd:blood orange',
     'xkcd:scarlet',
+    'xkcd:violet',
+    'xkcd:purple'
 ]
 
 # Plots to generate:
