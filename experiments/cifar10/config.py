@@ -252,17 +252,17 @@ test_unc_models = {
     #         'n_samples': 1
     #     }
     # },
-    'SCOD (T=76,k=12)': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 12,
-            'device':'gpu',
-        },
-        'load_name': 'scod_SRFT_s76_n12',
-        'forward_kwargs': {
-            'n_eigs': 12,
-        }
-    },
+    # 'SCOD (T=76,k=12)': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #     },
+    #     'load_name': 'scod_SRFT_s76_n12',
+    #     'forward_kwargs': {
+    #         'n_eigs': 12,
+    #     }
+    # },
     # 'SCOD_freeze_0.25 (T=76,k=12)': {
     #     'class': SCOD,
     #     'kwargs': {
@@ -323,18 +323,18 @@ test_unc_models = {
     #         'n_eigs': 12,
     #     }
     # },
-    'SCOD_freeze_0.85 (T=184,k=30)': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 30,
-            'device':'gpu',
-        },
-        'freeze': 0.85,
-        'load_name': 'scod_SRFT_s184_n30_freeze_0.85',
-        'forward_kwargs': {
-            'n_eigs': 30,
-        }
-    },
+    # 'SCOD_freeze_0.85 (T=184,k=30)': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 30,
+    #         'device':'gpu',
+    #     },
+    #     'freeze': 0.85,
+    #     'load_name': 'scod_SRFT_s184_n30_freeze_0.85',
+    #     'forward_kwargs': {
+    #         'n_eigs': 30,
+    #     }
+    # },
     'kfac_n1e6_s5000': {
         'class': KFAC,
         'kwargs': {
@@ -347,14 +347,14 @@ test_unc_models = {
             'scale': 5000.
         }
     },
-    'naive': {
-        'class': Naive,
-        'kwargs': {
-            'device':'gpu'
-        },
-        'load_name': None,
-        'forward_kwargs': {}
-    },
+    # 'naive': {
+    #     'class': Naive,
+    #     'kwargs': {
+    #         'device':'gpu'
+    #     },
+    #     'load_name': None,
+    #     'forward_kwargs': {}
+    # },
     # 'ensemble': {
     #     'class': Ensemble,
     #     'kwargs': {

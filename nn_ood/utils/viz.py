@@ -26,11 +26,34 @@ def plot_scatter(axes, results):
         axes[i].scatter(data["metrics"], data["uncs"], label=name, alpha=0.002, color='C'+str(i))
         axes[i].legend()
         axes[i].set_xlabel(data["metric_name"])
-        axes[i].set_xlim([1e-8,1e2])
-        axes[i].set_xscale("log")
+        if np.max(data["metrics"]) - np.min(data['metrics']) > 20:
+            axes[i].set_xlim([1e-8,1e2])
+            axes[i].set_xscale("log")
         axes[i].grid()
             
     axes[0].set_ylabel("uncertainty estimate")
+
+def plot_binned_by_unc(axes, results, N_bins = 15):
+    for i, (name, data) in enumerate(results.items()):
+        metrics = data["metrics"]
+        uncs = data["uncs"]
+        norm_uncs = (uncs - np.min(uncs))/(np.max(uncs) - np.min(uncs))
+        bins = np.arange(0., 1. + 1./N_bins, 1./N_bins)
+        unnormed_bins = bins*(np.max(uncs) - np.min(uncs)) + np.min(uncs)
+        binned_idx = np.digitize(norm_uncs, bins)
+        binned_avg_metric = []
+        n_per_bin = np.zeros(N_bins)
+        for j in range(N_bins):
+            binned_avg_metric.append( np.mean( metrics[binned_idx - 1 == j] ) )
+            n_per_bin[j] = np.sum( binned_idx - 1 == j )
+        widths = np.diff(unnormed_bins)
+        alphas = n_per_bin / np.max(n_per_bin)
+        axes[i].scatter(unnormed_bins[1:], binned_avg_metric, s=20*alphas, label=name)
+        axes[i].legend()
+        axes[i].set_xlabel("unc")
+        axes[i].grid()
+            
+    axes[0].set_ylabel("metric")
 
 
 def compute_roc_and_pr(negative_label_values, positive_label_values):

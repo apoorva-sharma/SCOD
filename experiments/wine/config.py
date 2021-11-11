@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from nn_ood.data.wine import WineData
 from nn_ood.posteriors import LocalEnsemble, Ensemble, SCOD, KFAC, Naive
-from nn_ood.distributions import GaussianFixedDiagVar
+from scod.distributions import Normal
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -69,7 +69,7 @@ def unfreeze_model(model):
         p.requires_grad = True
 
         
-dist_fam = GaussianFixedDiagVar(sigma_diag=np.array([1.])).to(device)
+dist_constructor = lambda z: Normal(loc=z, scale=torch.ones_like(z)) #GaussianFixedDiagVar(sigma_diag=np.array([1.])).to(device)
 opt_class = torch.optim.Adam
 opt_kwargs = {
     'lr': 0.02,
