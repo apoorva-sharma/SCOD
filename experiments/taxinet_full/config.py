@@ -3,7 +3,7 @@ import torch.nn as nn
 from torchvision import models
 from nn_ood.data.taxinet import TaxiNetFull
 from nn_ood.posteriors import LocalEnsemble, Ensemble, SCOD, KFAC, Naive
-from nn_ood.distributions import GaussianFixedDiagVar
+from scod.distributions import Normal
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -91,7 +91,7 @@ def unfreeze_model(model):
         p.requires_grad = v
     
 ## OPTIMIZATION 
-dist_fam = GaussianFixedDiagVar(sigma_diag=np.array([1., 1.])).to(device)
+dist_constructor = lambda z: Normal(loc=z, scale=torch.ones_like(z)) #GaussianFixedDiagVar(sigma_diag=np.array([1., 1.])).to(device)
 opt_class = torch.optim.SGD
 opt_kwargs = {
     'lr': LEARNING_RATE,
@@ -104,33 +104,33 @@ sched_kwargs = {
 }   
     
 prep_unc_models = {
-    'local_ensemble': {
-        'class': LocalEnsemble,
-        'kwargs': {
-            'batch_size': 32,
-            'max_samples': 4,
-            'num_eigs': 14,
-            'device':'gpu'
-        },
-    },
-    'kfac': {
-        'class': KFAC,
-        'kwargs': {
-            'device':'gpu',
-            'input_shape': [3, 200, 360],
-            'num_loss_samples': 5,
-        },
-    },
-    'scod_SRFT_s124_n20_freeze': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 124,
-            'num_eigs': 20,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-        'freeze':True
-    },
+    # 'local_ensemble': {
+    #     'class': LocalEnsemble,
+    #     'kwargs': {
+    #         'batch_size': 32,
+    #         'max_samples': 4,
+    #         'num_eigs': 14,
+    #         'device':'gpu'
+    #     },
+    # },
+    # 'kfac': {
+    #     'class': KFAC,
+    #     'kwargs': {
+    #         'device':'gpu',
+    #         'input_shape': [3, 200, 360],
+    #         'num_loss_samples': 5,
+    #     },
+    # },
+    # 'scod_SRFT_s124_n20_freeze': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 124,
+    #         'num_eigs': 20,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    #     'freeze':True
+    # },
     'scod_SRFT_s46_n7': {
         'class': SCOD,
         'kwargs': {

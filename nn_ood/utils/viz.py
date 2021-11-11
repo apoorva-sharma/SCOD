@@ -48,12 +48,13 @@ def plot_binned_by_unc(axes, results, N_bins = 15):
             n_per_bin[j] = np.sum( binned_idx - 1 == j )
         widths = np.diff(unnormed_bins)
         alphas = n_per_bin / np.max(n_per_bin)
-        axes[i].scatter(unnormed_bins[1:], binned_avg_metric, s=20*alphas, label=name)
-        axes[i].legend()
-        axes[i].set_xlabel("unc")
-        axes[i].grid()
-            
-    axes[0].set_ylabel("metric")
+        axes.scatter(unnormed_bins[1:], binned_avg_metric, s=20*alphas, label=name)
+
+    axes.legend()
+    axes.set_xlabel("unc")
+    axes.grid()
+        
+    axes.set_ylabel("metric")
 
 
 def compute_roc_and_pr(negative_label_values, positive_label_values):

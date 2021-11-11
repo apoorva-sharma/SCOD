@@ -69,7 +69,7 @@ def unfreeze_model(model):
         p.requires_grad = True
 
         
-dist_constructor = lambda z: Normal(loc=z, scale=torch.ones_like(z)) #GaussianFixedDiagVar(sigma_diag=np.array([1.])).to(device)
+dist_constructor = lambda z: Normal(loc=z, scale=0.2*torch.ones_like(z)) #GaussianFixedDiagVar(sigma_diag=np.array([1.])).to(device)
 opt_class = torch.optim.Adam
 opt_kwargs = {
     'lr': 0.02,
