@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 
-from ..second_order import zero_grads
 from hessian_eigenthings import compute_hessian_eigenthings
 from copy import deepcopy
 from scod import distributions
@@ -93,7 +92,7 @@ class LocalEnsemble(nn.Module):
         assert len(vec.shape) == 1
         grad_vecs = []
         for j in range(vec.shape[0]):
-            zero_grads(self.model)
+            self.model.zero_grad(set_to_none=True)
             vec[j].backward(retain_graph=True)
             g = self._get_grad_vec().detach()
             grad_vecs.append(g)
@@ -189,7 +188,7 @@ class LocalEnsemble(nn.Module):
                 loss = mu[j:j+1,0:1]
                 
             for k in range(self.n_y_samp):
-                zero_grads(self.model)
+                self.model.zero_grad(set_to_none=True)
                 loss[k].backward(retain_graph=True)
                 
                 with torch.no_grad():

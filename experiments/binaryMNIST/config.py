@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from nn_ood.data.binary_mnist import BinaryMNIST
 from nn_ood.posteriors import LocalEnsemble, Ensemble, SCOD, Naive, KFAC
-from nn_ood.distributions import BernoulliLogit
+from scod.distributions import Bernoulli
 import numpy as np
 import matplotlib.pyplot as plt
     
@@ -106,7 +106,7 @@ def unfreeze_model(model):
     for p in model.parameters():
         p.requires_grad = True
 
-dist_fam = BernoulliLogit().to(device)
+dist_construcotr = lambda z: Bernoulli(logits=z)
 opt_class = torch.optim.SGD
 opt_kwargs = {
     'lr': LEARNING_RATE,

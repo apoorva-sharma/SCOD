@@ -108,7 +108,7 @@ def unfreeze_model(model):
     for p in model.parameters():
         p.requires_grad = True
 
-dist_constructor = lambda z: Normal(loc=z, scale=0.1*torch.ones_like(z))
+dist_constructor = lambda z: Normal(loc=z, scale=0.2*torch.ones_like(z))
 opt_class = torch.optim.SGD
 opt_kwargs = {
     'lr': LEARNING_RATE,

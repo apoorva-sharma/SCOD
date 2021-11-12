@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from nn_ood.data.simple_reg import Cubic
 from nn_ood.posteriors import LocalEnsemble, SCOD, Ensemble, Naive, KFAC
-from nn_ood.distributions import GaussianFixedDiagVar
+from scod.distributions import Normal
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -94,7 +94,7 @@ def unfreeze_model(model):
     for p in model.parameters():
         p.requires_grad = True
 
-dist_fam = GaussianFixedDiagVar(sigma_diag=np.array([3])).to(device)
+dist_constructor = lambda z: Normal(loc=z, scale=3*torch.ones_like(z))
 opt_class = torch.optim.Adam
 opt_kwargs = {
     'lr': LEARNING_RATE,
