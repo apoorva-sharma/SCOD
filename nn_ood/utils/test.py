@@ -7,8 +7,12 @@ from .data_transforms import TransformedDataset
 
 
 def test_unc_model(model, dataset, device, batch_size=1, **forward_kwargs):
+    pin_memory = True
+    if device == torch.device("cpu"):
+        pin_memory = False
+
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
-                                             shuffle=False, num_workers=4)
+                                             shuffle=False, num_workers=4, pin_memory=pin_memory)
     
     dataset_size = len(dataset)
     
@@ -19,8 +23,8 @@ def test_unc_model(model, dataset, device, batch_size=1, **forward_kwargs):
     
     # Iterate over data.
     for inputs, labels in tqdm.tqdm(dataloader):
-        inputs = inputs.to(device)
-        labels = labels.to(device)
+        inputs = inputs.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
     
         # forward
         # track history if only in train

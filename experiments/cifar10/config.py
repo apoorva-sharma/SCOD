@@ -27,7 +27,7 @@ N_EPOCHS = 0
 
 ## SET UP DATASETS
 dataset_class = Cifar10Data
-test_dataset_args = ['val', 'ood', 'svhn', 'tIN', 'lsun']
+test_dataset_args = ['val', 'ood', 'svhn', 'tIN', 'lsun', 'cifar100']
 
 ## DEFINE VISUALIZATION FUNCTIONS
 def plt_image(ax, inp):
@@ -159,25 +159,25 @@ prep_unc_models = {
     #         'device': 'gpu'
     #     }
     # },
-    'scod_SRFT_s184_n30_freeze_0.85': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 184,
-            'num_eigs': 30,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-        'freeze': 0.85
-    },
-    'scod_SRFT_s76_n12': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 76,
-            'num_eigs': 12,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-    },
+    # 'scod_SRFT_s184_n30_freeze_0.85': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 184,
+    #         'num_eigs': 30,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    #     'freeze': 0.85
+    # },
+    # 'scod_SRFT_s76_n12': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 76,
+    #         'num_eigs': 12,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    # },
     # 'scod_SRFT_s76_n12_freeze_0.5': {
     #     'class': SCOD,
     #     'kwargs': {
@@ -240,18 +240,18 @@ prep_unc_models = {
 
 # recipe for testing uncertainty models
 test_unc_models = {
-    # 'local_ensemble': {
-    #     'class': LocalEnsemble,
-    #     'kwargs': {
-    #         'num_eigs': 20,
-    #         'device': 'gpu',
-    #         'n_y_samp': 5,
-    #     },
-    #     'load_name': 'local_ensemble',
-    #     'forward_kwargs': {
-    #         'n_samples': 1
-    #     }
-    # },
+    'local_ensemble': {
+        'class': LocalEnsemble,
+        'kwargs': {
+            'num_eigs': 20,
+            'device': 'gpu',
+            'n_y_samp': 5,
+        },
+        'load_name': 'local_ensemble',
+        'forward_kwargs': {
+            'n_samples': 1
+        }
+    },
     'SCOD (T=76,k=12)': {
         'class': SCOD,
         'kwargs': {
@@ -358,26 +358,26 @@ test_unc_models = {
             'n_eigs': 30,
         }
     },
-    # 'kfac_n1e6_s5000': {
-    #     'class': KFAC,
-    #     'kwargs': {
-    #         'device':'gpu',
-    #         'input_shape':[3,224,224]
-    #     },
-    #     'load_name': 'kfac',
-    #     'forward_kwargs': {
-    #         'norm': 1e6,
-    #         'scale': 5000.
-    #     }
-    # },
-    # 'naive': {
-    #     'class': Naive,
-    #     'kwargs': {
-    #         'device':'gpu'
-    #     },
-    #     'load_name': None,
-    #     'forward_kwargs': {}
-    # },
+    'kfac_n1e6_s5000': {
+        'class': KFAC,
+        'kwargs': {
+            'device':'gpu',
+            'input_shape':[3,224,224]
+        },
+        'load_name': 'kfac',
+        'forward_kwargs': {
+            'norm': 1e6,
+            'scale': 5000.
+        }
+    },
+    'naive': {
+        'class': Naive,
+        'kwargs': {
+            'device':'gpu'
+        },
+        'load_name': None,
+        'forward_kwargs': {}
+    },
     # 'ensemble': {
     #     'class': Ensemble,
     #     'kwargs': {
@@ -401,7 +401,7 @@ out_dist_splits = test_dataset_args[2:]
 keys_to_compare = [
     'SCOD (T=76,k=12)',
     'SCOD_freeze_0.85 (T=184,k=30)',
-    # 'local_ensemble',
+    'local_ensemble',
     'kfac_n1e6_s5000',
     'naive',
     'SCOD (T=76,k=12) calibrated',
@@ -411,7 +411,7 @@ keys_to_compare = [
 colors = [
     'xkcd:azure',
     'xkcd:electric blue',
-    # 'xkcd:mango',
+    'xkcd:mango',
     'xkcd:blood orange',
     'xkcd:scarlet',
     'xkcd:violet',
@@ -443,7 +443,7 @@ plots_to_generate = {
                 'Local Ensemble',
                 'KFAC',
                 'Naive',
-                'Maha'
+                # 'Maha'
             ]
         },
         'title': "CIFAR10",
@@ -474,7 +474,7 @@ import seaborn as sns
 cmap = sns.color_palette("crest", as_cmap=True)
 freeze_colors = [cmap(k/6) for k in range(6)] + ["xkcd:azure"]
 
-for split, label in zip(['ood', 'svhn', 'tIN', 'lsun'],['CIFAR class >= 5','SVHN','TinyImageNet', 'LSUN']):
+for split, label in zip(['ood', 'svhn', 'tIN', 'lsun', 'cifar100'],['CIFAR class >= 5','SVHN','TinyImageNet', 'LSUN', 'cifar100']):
     plot = {
         'summary_fn': summarize_ood_results,
         'summary_fn_args': [
@@ -500,3 +500,38 @@ for split, label in zip(['ood', 'svhn', 'tIN', 'lsun'],['CIFAR class >= 5','SVHN
     
     plot_name = 'freeze_test_%s.pdf' % split
     plots_to_generate[plot_name] = plot
+
+    plot = {
+        'summary_fn': summarize_ood_results,
+        'summary_fn_args': [
+            in_dist_splits,
+            [split]
+        ],
+        'summary_fn_kwargs': {
+            'keys_to_compare': keys_to_compare,
+        },
+        'plot_fn': plot_perf_vs_runtime,
+        'plot_fn_args': [],
+        'plot_fn_kwargs': {
+            'colors': colors,
+            'figsize': [4,2.5],
+            'dpi': 150,
+            'normalize_x': True,
+        },
+        'legend': {
+            'labels': [
+                'SCOD',
+                'SCOD (LL)',
+                'Local Ensemble',
+                'KFAC',
+                'Naive',
+                # 'Maha'
+            ]
+        },
+        'title': "In: CIFAR class < 5" + " | Out:  " + label,
+    }
+
+    plot_name = 'individual_ood_%s.pdf' % split
+    plots_to_generate[plot_name] = plot
+
+

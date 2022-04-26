@@ -25,7 +25,7 @@ class MNIST(Subset):
             dataset = FashionMNIST
             root = os.path.join(nn_ood.DATASET_FOLDER, "FashionMNIST")
             mnist_split = "val"
-            target_criterion = lambda x: x == x
+            target_criterion = lambda x: np.equal( x, x )
         
         self.mnist = dataset(root=root, train=(split=="train"), download=True)
         

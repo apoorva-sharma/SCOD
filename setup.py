@@ -14,6 +14,7 @@ install_requires = [
     'pandas>=1.0.1',
     'scikit-learn>=0.23.2',
     'seaborn>=0.11.1',
+    'laplace-torch',
     f'hessian_eigenthings @ file://localhost/{Path(__file__).parent}/pytorch-hessian-eigenthings/',
     f'curvature @ file://localhost/{Path(__file__).parent}/curvature/'
 ]

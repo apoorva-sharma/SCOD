@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from nn_ood.data.mnist import MNIST
-from nn_ood.posteriors import LocalEnsemble, Ensemble, SCOD, KFAC, Naive
+from nn_ood.posteriors import LocalEnsemble, Ensemble, SCOD, KFAC, Naive, KronLaplace
 from scod.distributions import Categorical
 import numpy as np
 import matplotlib.pyplot as plt
@@ -69,19 +69,23 @@ def weight_init(m):
     if m.__class__.__name__.find('Conv') != -1:
         nn.init.normal_(m.weight, 0.0, 0.02)
 
+class MNISTmodel(nn.Sequential):
+    def __init__(self):
+        super().__init__(        
+            nn.Conv2d(1, 16, 3, 1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(16, 32, 3, 1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(32, 32, 3, 1),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(288, 5))
+        self.output_size = 5
+
 def make_model():
-    model = nn.Sequential(
-        nn.Conv2d(1, 16, 3, 1),
-        nn.ReLU(),
-        nn.MaxPool2d(2),
-        nn.Conv2d(16, 32, 3, 1),
-        nn.ReLU(),
-        nn.MaxPool2d(2),
-        nn.Conv2d(32, 32, 3, 1),
-        nn.ReLU(),
-        nn.Flatten(),
-        nn.Linear(288, 5)
-    )
+    model = MNISTmodel()
     model.apply(weight_init)
     
     return model
@@ -141,6 +145,15 @@ prep_unc_models = {
             'sketch_type': 'srft'
         },
     },
+    # 'scod_iPCA_n100': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 10,
+    #         'num_eigs': 300,
+    #         'device':'gpu',
+    #         'sketch_type': 'iPCA'
+    #     },
+    # },
     'scod_SRFT_s604_n100_freeze': {
         'class': SCOD,
         'kwargs': {
@@ -151,28 +164,35 @@ prep_unc_models = {
         },
         'freeze': True,
     },
-    'scod_SRFT_s64_n10': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 64,
-            'num_eigs': 10,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
+    # 'scod_SRFT_s64_n10': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 64,
+    #         'num_eigs': 10,
+    #         'device':'gpu',
+    #         'sketch_type': 'srft'
+    #     },
+    # },
+    'kron_laplace' : {
+        'class' : KronLaplace,
+        'kwargs' : {
+            'damping': True,
+            'input_shape': [1, 28, 28]
+        }
     }
 }
 
 test_unc_models = {
-    # 'local_ensemble_n100': {
-    #     'class': LocalEnsemble,
-    #     'kwargs': {
-    #         'num_eigs': 100,
-    #         'device':'gpu',
-    #         'n_y_samp': 5,
-    #     },
-    #     'load_name': 'local_ensemble100',
-    #     'forward_kwargs': {}
-    # },
+    'local_ensemble_n100': {
+        'class': LocalEnsemble,
+        'kwargs': {
+            'num_eigs': 100,
+            'device':'gpu',
+            'n_y_samp': 5,
+        },
+        'load_name': 'local_ensemble100',
+        'forward_kwargs': {}
+    },
     # 'local_ensemble_n50': {
     #     'class': LocalEnsemble,
     #     'kwargs': {
@@ -209,15 +229,15 @@ test_unc_models = {
     #         'n_eigs': 10
     #     }
     # },
-    # 'kfac': {
-    #     'class': KFAC,
-    #     'kwargs': {
-    #         'device':'gpu',
-    #         'input_shape': [1, 28, 28]
-    #     },
-    #     'load_name': 'kfac',
-    #     'forward_kwargs': {}
-    # },
+    'kfac': {
+        'class': KFAC,
+        'kwargs': {
+            'device':'gpu',
+            'input_shape': [1, 28, 28]
+        },
+        'load_name': 'kfac',
+        'forward_kwargs': {}
+    },
     'SCOD': {
         'class': SCOD,
         'kwargs': {
@@ -229,6 +249,18 @@ test_unc_models = {
             'n_eigs':300,
         }
     },
+    # 'SCOD_iPCA': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 10,
+    #         'num_eigs': 300,
+    #         'device':'gpu'
+    #     },
+    #     'load_name': 'scod_iPCA_n100',
+    #     'forward_kwargs': {
+    #         'n_eigs':300,
+    #     }
+    # },
     'SCOD_freeze': {
         'class': SCOD,
         'kwargs': {
@@ -241,46 +273,55 @@ test_unc_models = {
             'n_eigs':300,
         }
     },
-    'SCOD_calibrated': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 100,
-            'device':'gpu'
-        },
-        'load_name': 'scod_SRFT_s604_n100_calibrated',
-        'forward_kwargs': {
-            'n_eigs':300,
-        }
-    },
-    'SCOD_freeze_calibrated': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 100,
-            'device':'gpu'
-        },
-        'freeze':True,
-        'load_name': 'scod_SRFT_s604_n100_freeze_calibrated',
-        'forward_kwargs': {
-            'n_eigs':300,
-        }
-    },
-    # 'naive': {
-    #     'class': Naive,
+    # 'SCOD_calibrated': {
+    #     'class': SCOD,
     #     'kwargs': {
+    #         'num_eigs': 100,
     #         'device':'gpu'
     #     },
-    #     'load_name': None,
-    #     'forward_kwargs': {}
+    #     'load_name': 'scod_SRFT_s604_n100_calibrated',
+    #     'forward_kwargs': {
+    #         'n_eigs':300,
+    #     }
     # },
-    # 'ensemble': {
-    #     'class': Ensemble,
+    # 'SCOD_freeze_calibrated': {
+    #     'class': SCOD,
     #     'kwargs': {
+    #         'num_eigs': 100,
     #         'device':'gpu'
     #     },
-    #     'load_name': None,
-    #     'multi_model': True,
-    #     'forward_kwargs': {}
-    # }
+    #     'freeze':True,
+    #     'load_name': 'scod_SRFT_s604_n100_freeze_calibrated',
+    #     'forward_kwargs': {
+    #         'n_eigs':300,
+    #     }
+    # },
+    'naive': {
+        'class': Naive,
+        'kwargs': {
+            'device':'gpu'
+        },
+        'load_name': None,
+        'forward_kwargs': {}
+    },
+    'ensemble': {
+        'class': Ensemble,
+        'kwargs': {
+            'device':'gpu'
+        },
+        'load_name': None,
+        'multi_model': True,
+        'forward_kwargs': {}
+    },
+    'kron_laplace' : {
+        'class' : KronLaplace,
+        'kwargs' : {
+            'input_shape': [1, 28, 28],
+            'device': 'gpu'
+        },
+        'load_name': 'kron_laplace',
+        'forward_kwargs': {}
+    }
 }
 
 # OOD PERFORMANCE TESTS
@@ -330,8 +371,9 @@ keys_to_compare = [
     'local_ensemble_n100',
     'kfac',
     'naive',
-    'SCOD_calibrated',
-    'SCOD_freeze_calibrated',
+    # 'SCOD_calibrated',
+    # 'SCOD_freeze_calibrated',
+    'kron_laplace'
 ]
 
 colors= [
@@ -341,8 +383,9 @@ colors= [
     'xkcd:mango',
     'xkcd:blood orange',
     'xkcd:scarlet',
-    'xkcd:violet',
-    'xkcd:purple'
+    # 'xkcd:violet',
+    # 'xkcd:purple',
+    'xkcd:green'
 ]
 
 

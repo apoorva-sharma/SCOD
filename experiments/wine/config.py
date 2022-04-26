@@ -148,37 +148,10 @@ test_unc_models = {
         'load_name': 'kfac',
         'forward_kwargs': {}
     },
-    'SCOD_calibrated': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 100,
-            'batch_size': 4,
-            'learning_rate': 1e-5,
-            'proj_type':'posterior_pred',
-            'device':'gpu'
-        },
-        'load_name': 'scod_SRFT_s604_n100_calibrated',
-        'forward_kwargs': {}
-    },
-    'SCOD_freeze_calibrated': {
-        'class': SCOD,
-        'kwargs': {
-            'num_eigs': 100,
-            'batch_size': 4,
-            'learning_rate': 1e-5,
-            'proj_type':'posterior_pred',
-            'device':'gpu'
-        },
-        'freeze': True,
-        'load_name': 'scod_SRFT_s604_n100_freeze_calibrated',
-        'forward_kwargs': {}
-    },
     'SCOD': {
         'class': SCOD,
         'kwargs': {
             'num_eigs': 100,
-            'batch_size': 4,
-            'learning_rate': 1e-5,
             'proj_type':'posterior_pred',
             'device':'gpu'
         },
@@ -189,8 +162,6 @@ test_unc_models = {
         'class': SCOD,
         'kwargs': {
             'num_eigs': 100,
-            'batch_size': 4,
-            'learning_rate': 1e-5,
             'proj_type':'posterior_pred',
             'device':'gpu'
         },
@@ -235,8 +206,6 @@ keys_to_compare = [
     'local_ensemble_n20',
     'kfac',
     'naive',
-    'SCOD_calibrated',
-    'SCOD_freeze_calibrated',
 ]
 
 colors= [

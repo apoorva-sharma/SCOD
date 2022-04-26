@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from nn_ood.posteriors.laplace import KronLaplace
 from nn_ood.data.binary_mnist import BinaryMNIST
 from nn_ood.posteriors import LocalEnsemble, Ensemble, SCOD, Naive, KFAC
 from scod.distributions import Bernoulli
@@ -84,6 +85,8 @@ def make_model():
         nn.Linear(288, 1)
     )
     model.apply(weight_init)
+
+    model.output_size = 1
     
     return model
 
@@ -106,7 +109,7 @@ def unfreeze_model(model):
     for p in model.parameters():
         p.requires_grad = True
 
-dist_construcotr = lambda z: Bernoulli(logits=z)
+dist_constructor = lambda z: Bernoulli(logits=z)
 opt_class = torch.optim.SGD
 opt_kwargs = {
     'lr': LEARNING_RATE,
@@ -136,6 +139,21 @@ prep_unc_models = {
             'sketch_type': 'srft'
         },
     },
+    # 'scod_iPCA_s304_n50': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_samples': 304,
+    #         'num_eigs': 50,
+    #         'device':'gpu',
+    #         'sketch_type': 'iPCA'
+    #     },
+    # },
+    'kron_laplace' : {
+        'class' : KronLaplace,
+        'kwargs' : {
+            'input_shape': [1, 28, 28]
+        }
+    },
     'scod_SRFT_s304_n50_freeze': {
         'class': SCOD,
         'kwargs': {
@@ -146,13 +164,13 @@ prep_unc_models = {
         },
         'freeze': True,
     },
-    'kfac': {
-        'class': KFAC,
-        'kwargs': {
-            'device':'gpu',
-            'input_shape': [1, 28, 28],
-        },
-    },
+    # 'kfac': {
+    #     'class': KFAC,
+    #     'kwargs': {
+    #         'device':'gpu',
+    #         'input_shape': [1, 28, 28],
+    #     },
+    # },
 }
 
 test_unc_models = {
@@ -185,6 +203,34 @@ test_unc_models = {
         'load_name': 'scod_SRFT_s304_n50_freeze',
         'forward_kwargs': {}
     },
+    # 'SCOD_ipca': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 50,
+    #         'device':'gpu'
+    #     },
+    #     'load_name': 'scod_iPCA_s304_n50',
+    #     'forward_kwargs': {}
+    # },
+    # 'SCOD calibrated': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 50,
+    #         'device':'gpu'
+    #     },
+    #     'load_name': 'scod_SRFT_s304_n50_calibrated',
+    #     'forward_kwargs': {}
+    # },
+    # 'SCOD_freeze calibrated': {
+    #     'class': SCOD,
+    #     'kwargs': {
+    #         'num_eigs': 50,
+    #         'device':'gpu'
+    #     },
+    #     'freeze':True,
+    #     'load_name': 'scod_SRFT_s304_n50_freeze_calibrated',
+    #     'forward_kwargs': {}
+    # },
     'naive': {
         'class': Naive,
         'kwargs': {
@@ -193,18 +239,18 @@ test_unc_models = {
         'load_name': None,
         'forward_kwargs': {}
     },
-    'kfac_100_10': {
-        'class': KFAC,
-        'kwargs': {
-            'device':'gpu',
-            'input_shape': [1, 28, 28]
-        },
-        'load_name': 'kfac',
-        'forward_kwargs': {
-            'norm': 100.,
-            'scale': 10.,
-        }
-    },
+    # 'kfac_100_10': {
+    #     'class': KFAC,
+    #     'kwargs': {
+    #         'device':'gpu',
+    #         'input_shape': [1, 28, 28]
+    #     },
+    #     'load_name': 'kfac',
+    #     'forward_kwargs': {
+    #         'norm': 100.,
+    #         'scale': 10.,
+    #     }
+    # },
     'ensemble': {
         'class': Ensemble,
         'kwargs': {
@@ -214,6 +260,15 @@ test_unc_models = {
         'multi_model': True,
         'forward_kwargs': {}
     },
+    'kron_laplace' : {
+        'class' : KronLaplace,
+        'kwargs' : {
+            'input_shape': [1, 28, 28],
+            'device': 'gpu'
+        },
+        'load_name': 'kron_laplace',
+        'forward_kwargs': {}
+    }
 }
 
 # OOD PERFORMANCE TESTS
@@ -232,10 +287,12 @@ keys_to_compare = [
                    'SCOD',
                    'SCOD_freeze',
                    'ensemble', 
+                #    'SCOD_ipca',
                    'local_ensemble_n50',
-                   'kfac_100_10',
+                   'kron_laplace',
                    'naive',
-                   'maha',
+                #    'SCOD calibrated',
+                #    'SCOD_freeze calibrated'
 ]
 
 colors= [
@@ -245,7 +302,8 @@ colors= [
          'xkcd:mango',
          'xkcd:blood orange',
          'xkcd:scarlet',
-         'xkcd:indigo'
+         'xkcd:violet',
+         'xkcd:purple'
 ]
 
 plots_to_generate = {

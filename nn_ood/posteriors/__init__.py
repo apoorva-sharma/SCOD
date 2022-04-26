@@ -4,3 +4,4 @@ from .ensemble import Ensemble
 from .kfac import KFAC
 from .naive import Naive
 from .maha import Mahalanobis
+from .laplace import KronLaplace

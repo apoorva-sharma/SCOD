@@ -116,38 +116,47 @@ sched_kwargs = {
 }    
     
 prep_unc_models = {
-    'scod_SRFT_s64_n10': {
+    'scod_SRFT_s64_n20': {
         'class': SCOD,
         'kwargs': {
             'num_samples': 64,
-            'num_eigs': 10,
+            'num_eigs': 20,
             'device':'gpu',
             'sketch_type': 'srft'
         },
     },
-    'scod_SRFT_s154_n25': {
+    'scod_SRFT_s154_n50': {
         'class': SCOD,
         'kwargs': {
             'num_samples': 154,
-            'num_eigs': 25,
-            'device':'gpu',
-            'sketch_type': 'srft'
-        },
-    },
-    'scod_SRFT_s304_n50': {
-        'class': SCOD,
-        'kwargs': {
-            'num_samples': 304,
             'num_eigs': 50,
             'device':'gpu',
             'sketch_type': 'srft'
         },
     },
-    'scod_SRFT_s604_n100': {
+    'scod_SRFT_s304_n100': {
+        'class': SCOD,
+        'kwargs': {
+            'num_samples': 304,
+            'num_eigs': 100,
+            'device':'gpu',
+            'sketch_type': 'srft'
+        },
+    },
+    'scod_SRFT_s604_n200': {
         'class': SCOD,
         'kwargs': {
             'num_samples': 604,
-            'num_eigs': 100,
+            'num_eigs': 200,
+            'device':'gpu',
+            'sketch_type': 'srft'
+        },
+    },
+    'scod_SRFT_s1204_n400': {
+        'class': SCOD,
+        'kwargs': {
+            'num_samples': 1204,
+            'num_eigs': 400,
             'device':'gpu',
             'sketch_type': 'srft'
         },
@@ -159,16 +168,17 @@ colors = []
 
 base_colors = [
     np.array([0.0, 1.0, 0.0, 0.0]),
-    np.array([0.3, 0.7, 0.0, 0.0]),
-    np.array([0.7, 0.3, 0.0, 0.0]),
+    np.array([0.25, 0.75, 0.0, 0.0]),
+    np.array([0.5, 0.5, 0.0, 0.0]),
+    np.array([0.75, 0.25, 0.0, 0.0]),
     np.array([1.0, 0.0, 0.0, 0.0]),
 ]
 
 test_unc_models = {}
-for i,T in enumerate([64,154,304,604]):
+for i,T in enumerate([64,154,304,604,1204]):
     for r in [1,2,5,10,25,50,100,200,400]:
-        num_eigs = int((T-4)/6)
-        if r > 4*(T-4)/6:
+        num_eigs = 2*int((T-4)/6)
+        if r > num_eigs:
             break
         exp_name = 'T=%d,r=%d' % (T,r)
         keys_to_compare.append(exp_name)

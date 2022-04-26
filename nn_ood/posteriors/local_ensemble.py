@@ -169,7 +169,7 @@ class LocalEnsemble(nn.Module):
 
     def sample_y(self, dist):
         if type(dist) == distributions.Bernoulli:
-            ys = torch.arange(self.n_y_samp, dtype=torch.int64) % 2
+            ys = torch.arange(self.n_y_samp, dtype=torch.float) % 2
         elif type(dist) == distributions.Categorical:
             ys = torch.arange(self.n_y_samp, dtype=torch.int64) % dist.probs.shape[-1]
         else:

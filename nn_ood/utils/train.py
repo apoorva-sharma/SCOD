@@ -22,9 +22,13 @@ def train_model(model, dataset_class, dist_constructor, optimizer, scheduler, de
     
     since = time.time()
 
+    pin_memory = True
+    if device == torch.device('cpu'):
+        pin_memory = False
+
     datasets = {x: dataset_class(x) for x in ['train', 'val']}
     dataloaders = {x: torch.utils.data.DataLoader(datasets[x], batch_size=batch_size,
-                                             shuffle=True, num_workers=4)
+                                             shuffle=True, num_workers=4, pin_memory=pin_memory)
               for x in ['train', 'val']}
     dataset_sizes = {x: len(datasets[x]) for x in ['train', 'val']}
 

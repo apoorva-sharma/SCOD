@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from nn_ood.data.rotated_mnist import RotatedMNIST
-from nn_ood.posteriors import LocalEnsemble, Ensemble, SCOD, KFAC, Naive
+from nn_ood.posteriors import SCOD
 from scod.distributions import Normal
 import numpy as np
     
@@ -9,7 +9,7 @@ import numpy as np
 FILENAME = "model"
 
 ## HYPERPARAMS
-N_MODELS = 5
+N_MODELS = 1
 
 LEARNING_RATE = 0.001
 SGD_MOMENTUM = 0.9
@@ -133,19 +133,12 @@ import seaborn as sns
 keys_to_compare = []
 colors = []
 
-base_colors = [
-    np.array([0.0, 1.0, 0.0, 0.0]),
-    np.array([0.3, 0.7, 0.0, 0.0]),
-    np.array([0.7, 0.3, 0.0, 0.0]),
-    np.array([1.0, 0.0, 0.0, 0.0]),
-]
-
 test_unc_models = {}
 
-Meps_to_test = [2., 5., 10.,20.,50.,100.,200.,500.,1000.,2000.,5000.,1e4,2e4,5e4]
+Meps_to_test = np.exp( np.linspace(-8,5,8) )
 color_palette = sns.color_palette("crest", len(Meps_to_test))
 for i,Meps in enumerate(Meps_to_test):
-    exp_name = 'Meps=%d' % (Meps)
+    exp_name = 'Meps=%0.3e' % (Meps)
     keys_to_compare.append(exp_name)
     exp = {
         'class': SCOD,
@@ -157,17 +150,11 @@ for i,Meps in enumerate(Meps_to_test):
         'load_name': 'scod_SRFT_s604_n100',
         'forward_kwargs': {
            'n_eigs': 100,
-           'Meps': Meps
+           'prior_multiplier': Meps
         }
     }
     
     colors.append(color_palette[i])
-    
-#     color = base_colors[2]
-#     color[3] = 0.2 + 0.8*(i /len(Meps_to_test))
-#     color = color.tolist()
-
-#     colors.append(color)
 
     test_unc_models[exp_name] = exp
 
@@ -188,7 +175,7 @@ def plot_ablation(summarized_results):
     auroc_confs = []
     for key,stats in summarized_results.items():
         tokenized = key.replace(',',' ').replace('=',' ').split(' ')
-        Meps = int(tokenized[1])
+        Meps = float(tokenized[1])
         Mepss.append(Meps)
         aurocs.append(stats['auroc'])
         auroc_confs.append(stats['auroc_conf'])
@@ -198,7 +185,7 @@ def plot_ablation(summarized_results):
     auroc_confs = np.array(auroc_confs)
     
     plt.figure(figsize=[4,2.5],dpi=150)
-    plt.errorbar(Mepss/5000., aurocs, yerr=auroc_confs,
+    plt.errorbar(Mepss, aurocs, yerr=auroc_confs,
                 linestyle='-', marker='', capsize=2)
     plt.xscale('log')
     plt.xlabel(r'Value of $\epsilon^2$')
